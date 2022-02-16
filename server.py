@@ -106,6 +106,12 @@ def balance():
     }
     return jsonify(response), 200
 
+@app.route("/valide",methods=['GET'])
+def valide():
+    response = {
+        'node_valide':block_chain.is_valide()
+    }
+    return jsonify(response),200
 
 def get_minig():
     while True:

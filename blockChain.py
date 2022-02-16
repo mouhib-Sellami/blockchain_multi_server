@@ -54,14 +54,13 @@ class BLockChain:
                 res = requests.get("http://"+node+"/chain")
                 if res.status_code == 200:
                     chain = res.json()["chain"]
-                    print(self.valide(chain))
                     if len(chain) > max_len:
                         if self.valide(chain):
                             max_len = len(chain)
                             new_chain = chain
             except Exception:
                 pass
-
+        
         if new_chain:
             self.chain = new_chain
             print("resolved")
@@ -83,7 +82,7 @@ class BLockChain:
 
     def valide(self, chain):
         for i in range(1, len(chain)):
-            if chain[i]['prevHash'] != self.hash(self.chain[i-1]) or chain[i-1]['hash'][:self.diff] != "0"*self.diff:
+            if chain[i]['prevHash'] != self.hash(chain[i-1]) or chain[i-1]['hash'][:self.diff] != "0"*self.diff:
                 return False
         return True
 
