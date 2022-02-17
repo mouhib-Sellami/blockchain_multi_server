@@ -14,9 +14,4 @@ class Wallet:
         return binascii.hexlify(self.public_key.exportKey(format='DER')).decode('ascii')
 
     def get_private_key(self):
-
         return binascii.hexlify(self.private_key.exportKey(format='DER')).decode('ascii')
-
-
-w = Wallet()
-print(w.get_public_key())

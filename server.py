@@ -2,8 +2,7 @@ from urllib import response
 from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
 from blockChain import *
-from threading import Timer
-
+from Wallet import *
 import json
 app = Flask(__name__)
 block_chain = BLockChain()
@@ -88,9 +87,15 @@ def get_partener_transactions():
     return jsonify(response), 200
 
 
-@app.route("/wallet/new", methods=["POST"])
+@app.route("/wallet/new", methods=["GET"])
 def new_wallet():
-    pass
+    new_wallet = Wallet()
+    response = {
+        "pub_key":new_wallet.get_public_key(),
+        "priv_key":new_wallet.get_private_key(),
+        "wallet_adress":None
+    }
+    return jsonify(response),200
 
 
 @app.route("/balance", methods=["GET"])
