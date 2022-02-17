@@ -60,7 +60,7 @@ class BLockChain:
                             new_chain = chain
             except Exception:
                 pass
-        
+
         if new_chain:
             self.chain = new_chain
             print("resolved")
@@ -146,10 +146,10 @@ class BLockChain:
                     cardTx.append(tx)
         return cardTx
 
-    def get_card_list(self,clientAdress):
+    def get_card_list(self, clientAdress):
         card_list = set()
         for block in self.chain:
             for tx in block['transaction']:
                 if tx['toAdress'] == clientAdress:
                     card_list.add(tx['fromAdress'])
-        return list(card_list)        
+        return list(card_list)

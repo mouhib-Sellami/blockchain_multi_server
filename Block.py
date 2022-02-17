@@ -1,7 +1,6 @@
 from uuid import uuid4
 import time
 import hashlib
-from collections import OrderedDict
 
 
 class Block:

@@ -1,7 +1,9 @@
 from uuid import uuid4
 import time
-from collections import OrderedDict
-
+from Crypto.Signature import pkcs1_15
+from Crypto.Hash import SHA256
+from Crypto.PublicKey import RSA
+import binascii
 
 class Transaction:
     def __init__(self, fromAdress="", toAdress="", amount=0.0, sig=""):
@@ -22,4 +24,10 @@ class Transaction:
         return self.__dict__
     
     def verfiy(self):
-        return True
+        try:
+            transactionHash = SHA256.new(self.data_core())
+            pkcs1_15.new(RSA.import_key(binascii.unhexlify(self.fromAdress))).verify(
+                transactionHash, binascii.unhexlify(self.sig))
+            return True
+        except (ValueError, TypeError) as e:
+            return False
