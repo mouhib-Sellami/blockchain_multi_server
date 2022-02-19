@@ -1,3 +1,5 @@
+
+from random import random
 from urllib import response
 from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
@@ -48,7 +50,6 @@ def post_transaction():
 def post_node():
     data = json.loads(request.data)
     nodes = data["nodes"].replace(" ", "").split(',')
-    print(data)
     if nodes is None:
         return "Error", 400
     for node in nodes:
@@ -58,6 +59,16 @@ def post_node():
         'total_nodes': [node for node in block_chain.nodes],
     }
     print(block_chain.nodes)
+    return jsonify(response), 200
+
+
+@app.route("/getnode", methods=['GET'])
+def get_nodes():
+    nodes = [node for node in block_chain.nodes]
+    nodes.append(block_chain.server)
+    response = {
+        'nodes': nodes
+    }
     return jsonify(response), 200
 
 
@@ -91,11 +102,11 @@ def get_partener_transactions():
 def new_wallet():
     new_wallet = Wallet()
     response = {
-        "pub_key":new_wallet.get_public_key(),
-        "priv_key":new_wallet.get_private_key(),
-        "wallet_adress":None
+        "pub_key": new_wallet.get_public_key(),
+        "priv_key": new_wallet.get_private_key(),
+        "wallet_adress": None
     }
-    return jsonify(response),200
+    return jsonify(response), 200
 
 
 @app.route("/balance", methods=["GET"])
@@ -111,24 +122,32 @@ def balance():
     }
     return jsonify(response), 200
 
-@app.route("/valide",methods=['GET'])
+
+@app.route("/valide", methods=['GET'])
 def valide():
     response = {
-        'node_valide':block_chain.is_valide()
+        'node_valide': block_chain.is_valide()
     }
-    return jsonify(response),200
+    return jsonify(response), 200
 
-def get_minig():
+import random
+def searching():
     while True:
         block_chain.get_block_from_network()
-        time.sleep(10)
+        time.sleep(random.randint(0, 20))
 
-
+def connect_nodes():
+    while True:
+        block_chain.resolve_nodes()
+        time.sleep(5)
 if __name__ == '__main__':
     import time
     import threading
-    th = threading.Thread(target=get_minig)
-    th.start()
+    th_resolve_confilct = threading.Thread(target=searching)
+    th_resolve_node = threading.Thread(target=connect_nodes)
+
+    th_resolve_confilct.start()
+    th_resolve_node.start()
 
     from argparse import ArgumentParser
 
@@ -140,5 +159,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     port = args.port
     host = args.host
-
+    block_chain.init_server("{}:{}".format(host, port))
+    block_chain.add_node("http://{}:{}".format(host, 5000))
+    block_chain.master_server = "{}:{}".format(host, 5000)
+    block_chain.signtomaster()
     app.run(host=host, port=port)

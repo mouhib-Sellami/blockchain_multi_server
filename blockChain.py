@@ -2,31 +2,90 @@ from urllib.parse import urlparse
 import requests
 from Block import *
 from Transation import Transaction
+import json
 
 
 class BLockChain:
     diff = 4
 
     def __init__(self):
+        self.server = ""
+        self.master_server = ""
         self.chain = []
         self.pending = []
         self.nodes = set()
 
+    def init_server(self, server):
+        self.server = server
+
     def add_node(self, node_url):
         parsed_url = urlparse(node_url)
-        if parsed_url.netloc:
+        if parsed_url.netloc and not self.server == parsed_url.netloc:
             self.nodes.add(parsed_url.netloc)
             return True
-        elif parsed_url.path:
+        elif parsed_url.path and not self.server == parsed_url.path:
             self.nodes.add(parsed_url.path)
             return True
         else:
             return False
 
+    def signtomaster(self):
+        try:
+            if self.server != self.master_server:
+                req = {
+                    "nodes": "http://{}".format(self.server)
+                }
+                sign_up = requests.post(
+                    "http://{}/addnode".format(self.master_server), data=json.dumps(req))
+                if sign_up.status_code == 200:
+                    print("sign to master")
+        except:
+            pass
+
+    def exsiste(self, node):
+        for item in self.nodes:
+            if node == item:
+                return False
+        return True
+
+    def resolve_nodes(self):
+
+        print("resolving nodes")
+        j = 0
+        my_node = list(self.nodes)
+        while j < len(my_node):
+            node = my_node[j]
+            try:
+                res = requests.get("http://"+node+"/getnode")
+                if res.status_code == 200:
+                    nodes = res.json()["nodes"]
+                    nodes = list(nodes)
+                    nodes.remove(self.server)
+                    nodes = set(nodes)
+                    # self.nodes = nodes
+                    for new_node in nodes:
+                        if new_node not in self.nodes:
+                            print(new_node)
+                            self.nodes.add(new_node)
+                    req = {
+                        "nodes": "http://{}".format(self.server)
+                    }
+
+            except Exception:
+                pass
+            j += 1
+        try:
+            sign_up = requests.post(
+                "http://{}/addnode".format(self.master_server), data=json.dumps(req))
+            if sign_up.status_code == 200:
+                print("master recovery {}".format(self.master_server))
+        except Exception:
+            pass
+
     def submit_transaction(self, fromArdess, toAdress, amount, sig):
         new_transaction = Transaction(fromAdress=fromArdess, toAdress=toAdress,
                                       amount=amount, sig=sig)
-        if new_transaction.verfiy():
+        if True:  # changed later
             self.pending.append(new_transaction.toJson())
             return True
         else:
@@ -48,7 +107,10 @@ class BLockChain:
     def resolve_confilcts(self):
         max_len = len(self.chain)
         new_chain = None
-        for node in self.nodes:
+        nodes = list(self.nodes)
+        i = 0
+        while i < len(nodes):
+            node = nodes[i]
             try:
                 print("http://"+node+"/chain")
                 res = requests.get("http://"+node+"/chain")
@@ -58,8 +120,12 @@ class BLockChain:
                         if self.valide(chain):
                             max_len = len(chain)
                             new_chain = chain
-            except Exception:
+            except Exception as e:
+                print("removing node ")
+                self.nodes.remove(node)
                 pass
+            finally:
+                i += 1
 
         if new_chain:
             self.chain = new_chain
